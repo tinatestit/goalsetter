@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goal Setter</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #F0FDF4;
+  --bg-card:  #FFFFFF;
+  --bg-mint:  #DCFCE7;
+  --g-dark:   #14532D;
+  --g-mid:    #16A34A;
+  --g-bright: #22C55E;
+  --g-400:    #4ADE80;
+  --g-light:  #86EFAC;
+  --g-pale:   #DCFCE7;
+  --border:   rgba(20,83,45,0.13);
+  --muted:    #6B7280;
+  --text:     #14532D;
+  --amber:    #F59E0B;
+  --amber-lt: #FCD34D;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+.page {
+  width: 100%;
+  max-width: 420px;
+  animation: slideUp 0.4s ease;
+}
+
+/* ── Dots ───────────────────── */
+.dots { display:flex; gap:6px; justify-content:center; margin-bottom:28px; }
+.dot  { height:7px; border-radius:4px; transition:all .4s ease; }
+.dot.on  { width:22px; background:var(--g-mid); }
+.dot.off { width:7px;  background:var(--border); }
+
+/* ── Type ───────────────────── */
+.h1 { font-family:'Playfair Display',serif; font-size:32px; font-weight:900; color:var(--g-dark); line-height:1.2; margin-bottom:10px; }
+.h2 { font-family:'Playfair Display',serif; font-size:25px; font-weight:700; color:var(--g-dark); line-height:1.3; margin-bottom:8px; }
+.sub { color:var(--muted); font-size:15px; margin-bottom:24px; }
+
+/* ── Buttons ────────────────── */
+.btn {
+  width:100%; padding:16px;
+  border:none; border-radius:14px;
+  font-family:'DM Sans',sans-serif; font-size:16px; font-weight:600;
+  cursor:pointer; transition:all .2s ease; margin-top:8px;
+}
+.btn-green { background:var(--g-mid); color:white; }
+.btn-green:hover:not(:disabled) { background:var(--g-dark); transform:translateY(-1px); }
+.btn-green:disabled { background:#E5E7EB; color:#9CA3AF; cursor:not-allowed; }
+.btn-ghost { background:transparent; border:2px solid var(--border); color:var(--muted); }
+.btn-ghost:hover { border-color:var(--g-light); color:var(--g-dark); }
+.btn-back  { background:none; border:none; color:var(--muted); font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; padding:8px 0; margin-bottom:20px; }
+
+/* ── Input ──────────────────── */
+.field {
+  width:100%; padding:15px 18px;
+  border:2px solid var(--border); border-radius:14px;
+  font-family:'DM Sans',sans-serif; font-size:16px; color:var(--g-dark);
+  background:white; outline:none; transition:border-color .2s ease;
+}
+.field:focus { border-color:var(--g-mid); }
+textarea.field { resize:none; }
+
+/* ── Chips ──────────────────── */
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip {
+  padding:7px 14px; background:var(--bg-mint); color:var(--g-dark);
+  border:none; border-radius:20px; font-family:'DM Sans',sans-serif;
+  font-size:14px; cursor:pointer; transition:all .2s ease;
+}
+.chip:hover, .chip.on { background:var(--g-dark); color:white; }
+
+/* ── Option cards ───────────── */
+.opt {
+  width:100%; padding:17px 20px;
+  background:white; border:2px solid var(--border); border-radius:14px;
+  display:flex; align-items:center; gap:16px;
+  cursor:pointer; text-align:left; margin-bottom:10px;
+  transition:all .2s ease; font-family:'DM Sans',sans-serif;
+}
+.opt:hover { border-color:var(--g-light); }
+.opt.on { background:var(--g-dark); border-color:var(--g-mid); }
+.opt.on .opt-l { color:white; }
+.opt.on .opt-s { color:rgba(255,255,255,.6); }
+.opt-l { font-weight:600; font-size:16px; color:var(--g-dark); }
+.opt-s { font-size:13px; color:var(--muted); margin-top:3px; }
+
+/* ── Timeline + Tooltip ─────── */
+.tl-opt {
+  position:relative;
+  width:100%; padding:15px 48px 15px 20px;
+  background:white; border:2px solid var(--border); border-radius:14px;
+  cursor:pointer; text-align:left; margin-bottom:8px;
+  transition:all .2s ease; font-family:'DM Sans',sans-serif;
+}
+.tl-opt:hover { border-color:var(--g-light); }
+.tl-opt.on { background:var(--g-dark); border-color:var(--g-mid); }
+.tl-opt.on .tl-l { color:white; }
+.tl-opt.on .tl-s { color:rgba(255,255,255,.6); }
+.tl-l { font-weight:600; font-size:16px; color:var(--g-dark); }
+.tl-s { font-size:13px; color:var(--muted); margin-top:2px; }
+.tl-opt.on .tl-l { color:white; }
+
+/* Info badge (?) */
+.tl-badge {
+  position:absolute; right:14px; top:50%; transform:translateY(-50%);
+  width:22px; height:22px; border-radius:50%;
+  background:var(--g-pale); color:var(--g-mid);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; cursor:help;
+  transition:background .2s;
+}
+.tl-opt.on .tl-badge { background:rgba(255,255,255,.15); color:rgba(255,255,255,.8); }
+
+/* Tooltip popup */
+.tip {
+  display:none;
+  position:absolute;
+  bottom:calc(100% + 8px); left:0;
+  background:var(--g-dark); color:white;
+  padding:14px 20px; border-radius:12px;
+  font-size:14px; line-height:1.6; z-index:200;
+  box-shadow:0 6px 24px rgba(0,0,0,.18);
+  pointer-events:none;
+  white-space:nowrap;
+  width:max-content;
+  min-width:220px;
+}
+.tip::after {
+  content:'';
+  position:absolute; top:100%; left:18px;
+  border:6px solid transparent;
+  border-top-color:var(--g-dark);
+}
+.tl-opt:hover .tip { display:block; }
+
+/* ── Loading ────────────────── */
+#app.loading { background:var(--g-dark) !important; }
+.orb {
+  width:88px; height:88px; border-radius:50%;
+  background:conic-gradient(var(--g-bright), var(--g-400), var(--g-bright));
+  margin:0 auto 36px;
+  display:flex; align-items:center; justify-content:center; font-size:38px;
+  animation:orb 2.8s ease-in-out infinite;
+  box-shadow:0 0 48px rgba(34,197,94,.35);
+}
+
+/* ── Smart reveal ───────────── */
+.smart-badge {
+  display:inline-block;
+  background:rgba(22,163,74,.12); border:1px solid var(--g-mid);
+  border-radius:20px; padding:5px 16px;
+  color:var(--g-mid); font-size:12px; font-weight:600;
+  letter-spacing:.06em; margin-bottom:14px;
+}
+.dark-card { background:var(--g-dark); border-radius:20px; padding:24px; margin-bottom:14px; }
+.dark-goal { font-family:'Playfair Display',serif; font-size:17px; color:white; line-height:1.65; margin:0 0 20px; }
+.eta-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 16px;
+  background:rgba(34,197,94,.12);
+  border:1px solid rgba(34,197,94,.28); border-radius:12px;
+}
+.insight {
+  background:var(--bg-mint); border-radius:16px;
+  padding:15px 20px; border-left:4px solid var(--g-mid);
+  margin-bottom:24px;
+}
+.insight-t { font-family:'Playfair Display',serif; font-style:italic; color:var(--g-dark); font-size:15px; line-height:1.6; }
+
+/* ── Outlook screen ─────────── */
+.ms-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background:#EBF5FF; border-radius:8px; padding:4px 10px;
+  font-size:12px; color:#0078D4; font-weight:600; margin-bottom:12px;
+}
+.outlook-card {
+  background:white; border-radius:16px;
+  border-left:4px solid #0078D4;
+  padding:18px 20px; margin:16px 0 22px;
+  box-shadow:0 2px 14px rgba(0,0,0,.06);
+}
+.ol-row { display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--muted); margin-bottom:6px; }
+
+/* ── Dashboard ──────────────── */
+.dash-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px; }
+.streak-box { background:var(--g-dark); border-radius:14px; padding:10px 14px; text-align:center; min-width:56px; }
+.focus-card { background:var(--g-dark); border-radius:18px; padding:20px; margin-bottom:18px; }
+.focus-label { color:var(--g-400); font-size:11px; font-weight:600; letter-spacing:.07em; margin-bottom:12px; }
+.task-row { display:flex; gap:12px; align-items:flex-start; }
+.cb {
+  width:26px; height:26px; border-radius:7px; flex-shrink:0; margin-top:1px;
+  background:transparent; border:2px solid rgba(255,255,255,.3);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all .2s ease; font-size:14px; font-weight:700; color:white;
+}
+.cb.done { background:var(--g-mid); border-color:var(--g-mid); }
+.task-txt { color:white; font-size:15px; line-height:1.5; transition:all .2s ease; }
+.task-txt.done { text-decoration:line-through; opacity:.4; }
+.sec-title { font-family:'Playfair Display',serif; font-size:18px; color:var(--g-dark); margin:0 0 12px; }
+.phase-item {
+  background:white; border-radius:14px; padding:14px 18px;
+  border:1px solid var(--border); display:flex; gap:14px; align-items:flex-start; margin-bottom:8px;
+}
+.phase-num {
+  width:30px; height:30px; border-radius:9px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:13px;
+}
+.quest-item {
+  background:white; border-radius:14px; padding:13px 18px;
+  border:1px solid var(--border); display:flex; gap:14px; align-items:center; margin-bottom:8px;
+}
+.reminder-notice {
+  margin-top:14px; padding:10px 14px;
+  background:rgba(34,197,94,.1); border-radius:10px;
+  display:flex; gap:10px; align-items:center;
+  color:rgba(255,255,255,.65); font-size:13px;
+}
+
+/* ── Calendar ───────────────── */
+.cal-wrap { background:white; border-radius:20px; padding:20px; border:1px solid var(--border); margin-bottom:18px; }
+.cal-head { display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px; }
+.cal-dname { text-align:center; color:var(--muted); font-size:11px; font-weight:600; padding:4px 0; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.cal-day {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  border-radius:8px; font-size:13px; position:relative;
+}
+.cal-day.today { background:var(--g-mid); color:white; font-weight:700; }
+.cal-day.done  { background:var(--bg-mint); color:var(--g-mid); font-weight:600; }
+.cal-day.fut   { color:var(--border); }
+.star-dot { position:absolute; top:2px; right:3px; font-size:7px; color:var(--g-mid); }
+.eta-card { background:var(--g-dark); border-radius:18px; padding:20px; margin-bottom:14px; }
+.streak-row {
+  background:var(--bg-mint); border-radius:16px; padding:14px 18px;
+  border:1px solid rgba(34,197,94,.28); display:flex; align-items:center; gap:14px; margin-bottom:22px;
+}
+
+/* ── Congrats Modal ─────────── */
+.overlay {
+  position:fixed; inset:0;
+  background:rgba(20,83,45,.88);
+  display:flex; align-items:center; justify-content:center;
+  z-index:1000; padding:20px;
+  animation:fadeIn .3s ease;
+}
+.modal {
+  background:white; border-radius:24px;
+  padding:40px 32px; max-width:380px; width:100%;
+  text-align:center; animation:slideUp .4s ease;
+}
+.big-emoji { font-size:64px; display:block; animation:bounce .7s ease; margin-bottom:4px; }
+.days-ring {
+  background:var(--bg-mint); border-radius:16px;
+  padding:20px; margin:20px 0 16px;
+}
+.days-big { font-size:42px; font-weight:900; color:var(--g-dark); line-height:1; }
+.days-lbl { color:var(--g-mid); font-weight:600; font-size:15px; margin-top:4px; }
+.days-sub { color:var(--muted); font-size:13px; margin-top:6px; line-height:1.4; }
+.streak-pill {
+  background:linear-gradient(135deg,var(--g-pale),var(--bg-mint));
+  border:1px solid rgba(34,197,94,.3); border-radius:12px;
+  padding:12px 16px; margin-bottom:24px;
+  display:flex; align-items:center; gap:10px;
+}
+
+/* ── Animations ─────────────── */
+@keyframes orb {
+  0%,100% { transform:scale(1) rotate(0deg); box-shadow:0 0 40px rgba(34,197,94,.4); }
+  50%      { transform:scale(1.08) rotate(180deg); box-shadow:0 0 64px rgba(34,197,94,.65); }
+}
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes slideUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+@keyframes bounce  { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-14px); } }
+@keyframes spin    { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ══════════════════════════════════
+//  STATE
+// ══════════════════════════════════
+const S = {
+  screen:0, goal:'', frequency:'', motivation:'',
+  timeline:'', effort:'', smartData:null,
+  reminderTime:'08:00', outlookAdded:false, taskDone:false,
+};
+
+const GOALS = ['Do a pull up','Run a 5K','Write a book','Learn Spanish','Start a business','Meditate daily'];
+const FREQS = [
+  {id:'never',     label:'Never',     sub:'Starting from scratch', emoji:'🌱'},
+  {id:'sometimes', label:'Sometimes', sub:'Occasional attempts',   emoji:'🔥'},
+  {id:'regularly', label:'Regularly', sub:'Already have a base',   emoji:'⚡'},
+];
+const TIMELINES = [
+  { id:'asap',    label:'ASAP',       info:'Fastest route',   tip:'Every day · ~1 hour' },
+  { id:'3mo',     label:'3 months',   info:'~12 weeks',       tip:'4–5 days/week · 30–45 min' },
+  { id:'6mo',     label:'6 months',   info:'~24 weeks',       tip:'3–4 days/week · 20–30 min' },
+  { id:'1yr',     label:'1 year',     info:'~52 weeks',       tip:'2–3 days/week · 15–20 min' },
+  { id:'none',    label:'No deadline',info:'Flexible pace',   tip:'Train whenever you can' },
+];
+const EFFORTS = [
+  {id:'light',    label:'< 10 min / day', sub:'Gentle & sustainable'},
+  {id:'moderate', label:'< 1 hour / day', sub:'Steady progress'},
+  {id:'intense',  label:'Full commitment',sub:'Whatever it takes'},
+];
+const MOT_CHIPS = ['Prove it to myself','Feel stronger','Challenge myself','Be a role model','Boost confidence','Long-term health'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOWS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+// ══════════════════════════════════
+//  NAV
+// ══════════════════════════════════
+const app = document.getElementById('app');
+app.style.transition = 'opacity 0.26s ease, transform 0.26s ease';
+
+function go(n) {
+  app.style.opacity = '0';
+  app.style.transform = 'translateY(8px)';
+  setTimeout(() => {
+    S.screen = n;
+    render();
+    requestAnimationFrame(() => {
+      app.style.opacity = '1';
+      app.style.transform = 'translateY(0)';
+    });
+  }, 270);
+}
+
+// ══════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════
+function dots(n) {
+  return `<div class="dots">${[0,1,2,3].map(i=>`<div class="dot ${i<n?'on':'off'}"></div>`).join('')}</div>`;
+}
+function btn(label,id,disabled=false,extra='btn-green') {
+  return `<button class="btn ${extra}" id="${id}"${disabled?' disabled':''} style="margin-top:8px;">${label}</button>`;
+}
+function ghost(label,id) {
+  return `<button class="btn btn-ghost" id="${id}" style="margin-top:8px;">${label}</button>`;
+}
+function back(to) {
+  return `<button class="btn-back" onclick="go(${to})">← Back</button>`;
+}
+function fmt(t) {
+  const [h,m] = t.split(':').map(Number);
+  return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+}
+function etaDate(days) {
+  const d = new Date(); d.setDate(d.getDate()+days);
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+}
+
+// ══════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════
+function s0() {
+  app.style.background = 'var(--bg)';
+  return `<div class="page">
+    <div style="text-align:center;margin-bottom:36px;">
+      <div style="width:60px;height:60px;border-radius:18px;background:var(--g-dark);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 22px;">🎯</div>
+      <h1 class="h1">What is an aspiration of yours?</h1>
+      <p class="sub">Something you've dreamed about but haven't started yet</p>
+    </div>
+    <input id="gi" class="field" type="text" placeholder="e.g. Do a pull up…" value="${S.goal}" style="margin-bottom:16px;">
+    <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">Or try an example:</p>
+    <div class="chips" style="margin-bottom:28px;">
+      ${GOALS.map(g=>`<button class="chip${S.goal===g?' on':''}" data-g="${g}">${g}</button>`).join('')}
+    </div>
+    ${btn('Set this goal →','b0',!S.goal.trim())}
+  </div>`;
+}
+
+function s1() {
+  app.style.background = 'var(--bg)';
+  return `<div class="page">
+    ${back(0)}${dots(1)}
+    <h2 class="h2">How much relevant experience do you have?</h2>
+    <p class="sub">Be honest — this shapes your starting pace</p>
+    ${FREQS.map(f=>`<button class="opt${S.frequency===f.id?' on':''}" data-f="${f.id}">
+      <span style="font-size:26px;">${f.emoji}</span>
+      <div><div class="opt-l">${f.label}</div><div class="opt-s">${f.sub}</div></div>
+    </button>`).join('')}
+    ${btn('Continue →','b1',!S.frequency)}
+  </div>`;
+}
+
+function s2() {
+  app.style.background = 'var(--bg)';
+  return `<div class="page">
+    ${back(1)}${dots(2)}
+    <h2 class="h2">Why does this matter to you?</h2>
+    <p class="sub">Your "why" is the fuel when things get hard</p>
+    <textarea id="mi" class="field" rows="3" placeholder="e.g. I want to prove to myself I can…">${S.motivation}</textarea>
+    <p style="color:var(--muted);font-size:13px;margin:12px 0 8px;">Quick examples:</p>
+    <div class="chips" style="margin-bottom:20px;">
+      ${MOT_CHIPS.map(m=>`<button class="chip${S.motivation===m?' on':''}" data-m="${m}">${m}</button>`).join('')}
+    </div>
+    ${btn('Continue →','b2',!S.motivation.trim())}
+  </div>`;
+}
+
+function s3() {
+  app.style.background = 'var(--bg)';
+  return `<div class="page">
+    ${back(2)}${dots(3)}
+    <h2 class="h2">When do you want to achieve this?</h2>
+    <p class="sub">Hover <span style="background:var(--g-pale);color:var(--g-mid);padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;">?</span> on each option to see what it requires</p>
+    ${TIMELINES.map(t=>`<div class="tl-opt${S.timeline===t.id?' on':''}" data-t="${t.id}">
+      <div class="tl-l">${t.label}</div>
+      <div class="tl-s">${t.info}</div>
+      <div class="tl-badge">?<div class="tip">${t.tip}</div></div>
+    </div>`).join('')}
+    ${btn('Continue →','b3',!S.timeline)}
+  </div>`;
+}
+
+function s4() {
+  app.style.background = 'var(--bg)';
+  return `<div class="page">
+    ${back(3)}${dots(4)}
+    <h2 class="h2">How much can you commit each day?</h2>
+    <p class="sub">Consistency beats intensity every time</p>
+    ${EFFORTS.map(e=>`<button class="opt${S.effort===e.id?' on':''}" data-e="${e.id}">
+      <div><div class="opt-l">${e.label}</div><div class="opt-s">${e.sub}</div></div>
+    </button>`).join('')}
+    ${btn('Make it SMART →','b4',!S.effort)}
+  </div>`;
+}
+
+function s5() {
+  app.className = 'loading';
+  app.style.background = 'var(--g-dark)';
+  return `<div class="page" style="text-align:center;padding:60px 0;">
+    <div class="orb">⚡</div>
+    <h2 id="lh" style="font-family:'Playfair Display',serif;font-size:26px;color:white;margin:0 0 10px;">Making your goal SMART…</h2>
+    <p id="ls" style="color:rgba(255,255,255,.45);font-size:15px;">Analysing your goal…</p>
+    <p style="color:rgba(134,239,172,.65);font-family:'Playfair Display',serif;font-style:italic;font-size:19px;margin-top:48px;">"${S.goal}"</p>
+  </div>`;
+}
+
+function s6() {
+  app.className = '';
+  app.style.background = 'var(--bg)';
+  const d = S.smartData;
+  return `<div class="page">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div class="smart-badge">✨ YOUR SMART GOAL</div>
+      <h1 class="h1">${S.goal}</h1>
+    </div>
+    <div class="dark-card">
+      <p class="dark-goal">"${d.smartGoal}"</p>
+      <div class="eta-row">
+        <span style="font-size:22px;">🗓</span>
+        <div>
+          <div style="color:#86EFAC;font-weight:600;font-size:15px;">Estimated: ${d.estimatedDays} days</div>
+          <div style="color:rgba(255,255,255,.45);font-size:13px;">to complete your goal</div>
+        </div>
+      </div>
+    </div>
+    <div class="insight"><p class="insight-t">${d.insight}</p></div>
+    ${btn('Schedule with Outlook →','b6')}
+    ${ghost('Skip calendar setup','b6s')}
+  </div>`;
+}
+
+function s7() {
+  app.style.background = 'var(--bg)';
+  const d = S.smartData;
+  const eta = etaDate(d.estimatedDays);
+  const task = (d.todayTask||'').substring(0,60);
+  return `<div class="page">
+    ${back(6)}
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="width:60px;height:60px;border-radius:18px;background:#EBF5FF;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;">📅</div>
+      <h2 class="h2" style="margin-bottom:6px;">Slot it into your day</h2>
+      <p class="sub">Goal Setter adds a recurring Outlook reminder so you never miss a session</p>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-weight:600;color:var(--g-dark);font-size:14px;margin-bottom:8px;">⏰ Daily reminder time</label>
+      <input type="time" id="rt" value="${S.reminderTime}" class="field" style="max-width:180px;">
+    </div>
+    <div class="ms-badge">
+      <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="2" fill="#0078D4"/><rect x="1" y="1" width="5.5" height="5.5" fill="#fff"/><rect x="7.5" y="1" width="5.5" height="5.5" fill="#fff" opacity=".7"/><rect x="1" y="7.5" width="5.5" height="5.5" fill="#fff" opacity=".7"/><rect x="7.5" y="7.5" width="5.5" height="5.5" fill="#fff"/></svg>
+      Outlook Calendar Preview
+    </div>
+    <div class="outlook-card">
+      <div style="font-weight:700;color:var(--g-dark);font-size:16px;margin-bottom:12px;">🏆 Daily: ${S.goal}</div>
+      <div class="ol-row"><span>⏰</span><span id="pt">${fmt(S.reminderTime)} — every day</span></div>
+      <div class="ol-row"><span>🔔</span><span>Reminder: 15 minutes before</span></div>
+      <div class="ol-row"><span>📅</span><span>Repeats daily until ${eta}</span></div>
+      <div class="ol-row"><span>📝</span><span style="font-style:italic;color:var(--g-mid);">"${task}…"</span></div>
+    </div>
+    <div id="ob">
+      <button class="btn btn-green" id="boa" style="margin-top:0;background:#0078D4;">
+        <span style="display:inline-flex;align-items:center;gap:8px;">
+          <svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="rgba(255,255,255,.25)"/><rect x="1" y="1" width="6.5" height="6.5" fill="#fff"/><rect x="8.5" y="1" width="6.5" height="6.5" fill="#fff" opacity=".7"/><rect x="1" y="8.5" width="6.5" height="6.5" fill="#fff" opacity=".7"/><rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#fff"/></svg>
+          Add to Outlook Calendar
+        </span>
+      </button>
+      ${ghost('Skip for now','bos')}
+    </div>
+    <div id="os" style="display:none;text-align:center;padding:16px;background:var(--bg-mint);border-radius:14px;color:var(--g-mid);font-weight:600;font-size:15px;margin-top:8px;">
+      ✅ Added to your Outlook calendar! Heading to your plan…
+    </div>
+  </div>`;
+}
+
+function s8() {
+  app.className = '';
+  app.style.background = 'var(--bg)';
+  const d = S.smartData;
+  const streak = 3;
+  return `<div class="page">
+    <div class="dash-header">
+      <div>
+        <p style="color:var(--muted);font-size:12px;margin:0 0 3px;letter-spacing:.05em;">YOUR GOAL</p>
+        <h2 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--g-dark);margin:0;">${S.goal}</h2>
+      </div>
+      <div class="streak-box">
+        <div style="font-size:20px;">🔥</div>
+        <div style="color:var(--amber);font-weight:700;font-size:18px;line-height:1;">${streak}</div>
+        <div style="color:rgba(255,255,255,.5);font-size:10px;margin-top:2px;">streak</div>
+      </div>
+    </div>
+
+    <div class="focus-card">
+      <div class="focus-label">TODAY'S FOCUS</div>
+      <div class="task-row">
+        <div class="cb${S.taskDone?' done':''}" id="cb">${S.taskDone?'✓':''}</div>
+        <p class="task-txt${S.taskDone?' done':''}" id="tt">${d.todayTask}</p>
+      </div>
+      ${S.outlookAdded?`<div class="reminder-notice"><span style="font-size:16px;">📅</span><span>Reminder set for ${fmt(S.reminderTime)} in Outlook</span></div>`:''}
+    </div>
+
+    <h3 class="sec-title">📋 Main Plan</h3>
+    ${d.phases.map((p,i)=>`<div class="phase-item">
+      <div class="phase-num" style="background:${i===0?'var(--g-dark)':'var(--bg-mint)'};color:${i===0?'var(--g-400)':'var(--muted)'};">${i+1}</div>
+      <div>
+        <div style="font-weight:600;color:var(--g-dark);font-size:15px;">${p.name} <span style="color:var(--muted);font-weight:400;font-size:13px;">· ${p.weeks}w</span></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:2px;">${p.description}</div>
+      </div>
+    </div>`).join('')}
+
+    <h3 class="sec-title" style="margin-top:20px;">⚡ Side Quests</h3>
+    ${d.sideQuests.map(q=>`<div class="quest-item">
+      <span style="font-size:24px;">${q.emoji}</span>
+      <div>
+        <div style="font-weight:600;color:var(--g-dark);font-size:15px;">${q.title}</div>
+        <div style="color:var(--muted);font-size:13px;">${q.description}</div>
+      </div>
+    </div>`).join('')}
+
+    <div style="margin-top:24px;">${btn('View calendar →','bdc')}</div>
+  </div>
+
+  ${S.taskDone ? `
+  <div class="overlay" id="mo">
+    <div class="modal">
+      <span class="big-emoji">🎉</span>
+      <h2 style="font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--g-dark);margin:12px 0 8px;">Well done!</h2>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:4px;">You completed today's task for</p>
+      <p style="font-family:'Playfair Display',serif;font-style:italic;color:var(--g-mid);font-size:16px;margin-bottom:6px;">"${S.goal}"</p>
+      <div class="days-ring">
+        <div class="days-big">${Math.max(0, d.estimatedDays - streak)}</div>
+        <div class="days-lbl">days remaining</div>
+        <div class="days-sub">You're on track to finish by<br><strong>${etaDate(d.estimatedDays)}</strong></div>
+      </div>
+      <div class="streak-pill">
+        <span style="font-size:22px;">🔥</span>
+        <div>
+          <div style="font-weight:700;color:var(--g-dark);font-size:15px;">${streak+1} day streak!</div>
+          <div style="color:var(--muted);font-size:12px;">Keep showing up — you're building something real</div>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="go(9)">See tomorrow's plan ✨</button>
+    </div>
+  </div>` : ''}`;
+}
+
+function s9() {
+  app.className = '';
+  app.style.background = 'var(--bg)';
+  const today = new Date();
+  const yr = today.getFullYear(), mo = today.getMonth();
+  const dim = new Date(yr, mo+1, 0).getDate();
+  const fdow = new Date(yr, mo, 1).getDay();
+  const td = today.getDate();
+  const done = new Set([td-3,td-2,td-1,td].filter(d=>d>0));
+  const d = S.smartData;
+  const eta = etaDate(d.estimatedDays);
+
+  return `<div class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+      <button onclick="go(8)" class="btn-back">← Dashboard</button>
+      <div style="background:var(--g-dark);border-radius:12px;padding:6px 14px;color:#86EFAC;font-weight:600;font-size:14px;">🗓 ${d.estimatedDays} days to go</div>
+    </div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--g-dark);margin:0 0 18px;">${MONTHS[mo]} ${yr}</h2>
+
+    <div class="cal-wrap">
+      <div class="cal-head">${DOWS.map(d=>`<div class="cal-dname">${d}</div>`).join('')}</div>
+      <div class="cal-grid">
+        ${Array(fdow).fill('<div></div>').join('')}
+        ${Array.from({length:dim},(_,i)=>{
+          const day=i+1, isT=day===td, isD=done.has(day), isF=day>td;
+          return `<div class="cal-day${isT?' today':isD?' done':isF?' fut':''}">${day}${isD&&!isT?'<span class="star-dot">★</span>':''}</div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="eta-card">
+      <div style="color:var(--g-400);font-size:11px;font-weight:600;letter-spacing:.07em;margin-bottom:8px;">ESTIMATED COMPLETION</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;color:white;font-weight:700;">${eta}</div>
+      <div style="color:rgba(255,255,255,.4);font-size:13px;margin-top:4px;">${d.estimatedDays} more days of showing up</div>
+    </div>
+
+    ${S.outlookAdded?`<div style="background:white;border-radius:16px;padding:16px 20px;border:1px solid var(--border);margin-bottom:14px;display:flex;gap:12px;align-items:center;">
+      <span style="font-size:24px;">📅</span>
+      <div>
+        <div style="font-weight:600;color:var(--g-dark);font-size:14px;">Outlook reminders active</div>
+        <div style="color:var(--muted);font-size:13px;">Daily at ${fmt(S.reminderTime)} until ${eta}</div>
+      </div>
+    </div>`:''}
+
+    <div class="streak-row">
+      <span style="font-size:26px;">🔥</span>
+      <div>
+        <div style="font-weight:600;color:var(--g-dark);font-size:15px;">3 day streak</div>
+        <div style="color:var(--muted);font-size:13px;">Keep it going — momentum is everything</div>
+      </div>
+    </div>
+    ${ghost('Start over','br')}
+  </div>`;
+}
+
+// ══════════════════════════════════
+//  RENDER + LISTENERS
+// ══════════════════════════════════
+function render() {
+  const screens = [s0,s1,s2,s3,s4,s5,s6,s7,s8,s9];
+  app.innerHTML = screens[S.screen]();
+  wire();
+}
+
+function wire() {
+  const $ = id => document.getElementById(id);
+  const on = (id, ev, fn) => { const el=$(id); if(el) el.addEventListener(ev,fn); };
+
+  // S0
+  const gi = $('gi');
+  if(gi) {
+    gi.addEventListener('input', e => {
+      S.goal = e.target.value;
+      const b = $('b0'); if(b) b.disabled = !S.goal.trim();
+      document.querySelectorAll('[data-g]').forEach(c => c.classList.toggle('on', c.dataset.g===S.goal));
+    });
+    gi.addEventListener('keydown', e => { if(e.key==='Enter' && S.goal.trim()) go(1); });
+  }
+  document.querySelectorAll('[data-g]').forEach(c => c.addEventListener('click', () => {
+    S.goal = c.dataset.g; if(gi) gi.value = S.goal;
+    document.querySelectorAll('[data-g]').forEach(x => x.classList.toggle('on', x.dataset.g===S.goal));
+    const b=$('b0'); if(b) b.disabled=false;
+  }));
+  on('b0','click',() => { if(S.goal.trim()) go(1); });
+
+  // S1
+  document.querySelectorAll('[data-f]').forEach(el => el.addEventListener('click', () => {
+    S.frequency = el.dataset.f;
+    document.querySelectorAll('[data-f]').forEach(x => x.classList.toggle('on', x.dataset.f===S.frequency));
+    const b=$('b1'); if(b) b.disabled=false;
+  }));
+  on('b1','click',() => { if(S.frequency) go(2); });
+
+  // S2
+  const mi = $('mi');
+  if(mi) mi.addEventListener('input', e => {
+    S.motivation = e.target.value;
+    const b=$('b2'); if(b) b.disabled=!S.motivation.trim();
+  });
+  document.querySelectorAll('[data-m]').forEach(c => c.addEventListener('click', () => {
+    S.motivation = c.dataset.m; if(mi) mi.value = S.motivation;
+    document.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x.dataset.m===S.motivation));
+    const b=$('b2'); if(b) b.disabled=false;
+  }));
+  on('b2','click',() => { if(S.motivation.trim()) go(3); });
+
+  // S3
+  document.querySelectorAll('[data-t]').forEach(el => el.addEventListener('click', e => {
+    if(e.target.closest('.tl-badge')) return; // don't select when clicking ?
+    S.timeline = el.dataset.t;
+    document.querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x.dataset.t===S.timeline));
+    const b=$('b3'); if(b) b.disabled=false;
+  }));
+  on('b3','click',() => { if(S.timeline) go(4); });
+
+  // S4
+  document.querySelectorAll('[data-e]').forEach(el => el.addEventListener('click', () => {
+    S.effort = el.dataset.e;
+    document.querySelectorAll('[data-e]').forEach(x => x.classList.toggle('on', x.dataset.e===S.effort));
+    const b=$('b4'); if(b) b.disabled=false;
+  }));
+  on('b4','click',() => { if(S.effort) generateSmart(); });
+
+  // S6
+  on('b6', 'click', () => go(7));
+  on('b6s','click', () => { S.outlookAdded=false; go(8); });
+
+  // S7
+  const rt = $('rt');
+  if(rt) rt.addEventListener('change', e => {
+    S.reminderTime = e.target.value;
+    const pt=$('pt'); if(pt) pt.textContent = fmt(S.reminderTime) + ' — every day';
+  });
+  on('boa','click', () => {
+    const b=$('boa'); if(b) { b.innerHTML='⏳ Connecting to Outlook…'; b.disabled=true; }
+    setTimeout(() => {
+      S.outlookAdded = true;
+      const ob=$('ob'), os=$('os');
+      if(ob) ob.style.display='none';
+      if(os) os.style.display='block';
+      setTimeout(() => go(8), 1600);
+    }, 1400);
+  });
+  on('bos','click', () => { S.outlookAdded=false; go(8); });
+
+  // S8
+  on('cb','click', () => {
+    if(!S.taskDone) { S.taskDone=true; render(); }
+  });
+  on('bdc','click', () => go(9));
+
+  // S9
+  on('br','click', () => {
+    Object.assign(S,{screen:0,goal:'',frequency:'',motivation:'',timeline:'',effort:'',smartData:null,reminderTime:'08:00',outlookAdded:false,taskDone:false});
+    go(0);
+  });
+}
+
+// ══════════════════════════════════
+//  API
+// ══════════════════════════════════
+function buildPrompt() {
+  const tl = TIMELINES.find(t=>t.id===S.timeline)?.label || S.timeline;
+  return `You are a goal coach. The user wants to: "${S.goal}"
+Profile: experience=${S.frequency}, motivation="${S.motivation}", timeline="${tl}", commitment="${S.effort}"
+Return ONLY valid JSON, no markdown or backticks:
+{"smartGoal":"...","estimatedDays":<int>,"phases":[{"name":"...","weeks":<int>,"description":"..."}],"todayTask":"...","sideQuests":[{"title":"...","description":"...","emoji":"..."}],"insight":"..."}`;
+}
+
+function fallback() {
+  const tl = TIMELINES.find(t=>t.id===S.timeline)?.label || '3 months';
+  return {
+    smartGoal:`Complete your first "${S.goal}" within ${tl==='ASAP'?'8 weeks':tl} by training ${S.effort==='light'?'10 minutes':'30 minutes'} daily, 5 days per week.`,
+    estimatedDays:56,
+    phases:[
+      {name:'Foundation',weeks:2,description:'Build the daily habit and establish your baseline'},
+      {name:'Development',weeks:4,description:'Progressive training with increasing intensity'},
+      {name:'Peak',weeks:2,description:'Final push and goal achievement'},
+    ],
+    todayTask:`Spend 5 minutes researching "${S.goal}" and write down three concrete next steps`,
+    sideQuests:[
+      {title:'Sleep 8 hours',description:'Recovery is where progress happens',emoji:'😴'},
+      {title:'Hydrate daily',description:'Performance starts with hydration',emoji:'💧'},
+      {title:'Track progress',description:'What gets measured gets improved',emoji:'📊'},
+    ],
+    insight:'The gap between who you are and who you want to be is closed by one consistent day at a time.',
+  };
+}
+
+async function generateSmart() {
+  go(5);
+  const phases = ['Analysing your goal…','Calculating your timeline…','Building your roadmap…','Almost ready…'];
+  let pi = 0;
+  const t = setInterval(() => {
+    pi = Math.min(pi+1, phases.length-1);
+    const el = document.getElementById('ls');
+    if(el) el.textContent = phases[pi];
+  }, 900);
+
+  const start = Date.now();
+  let result;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:buildPrompt()}]}),
+    });
+    const data = await res.json();
+    result = JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+  } catch { result = fallback(); }
+
+  clearInterval(t);
+  await new Promise(r => setTimeout(r, Math.max(0, 3000-(Date.now()-start))));
+  S.smartData = result;
+  go(6);
+}
+
+// ══════════════════════════════════
+//  INIT
+// ══════════════════════════════════
+render();
+</script>
+</body>
+</html>
